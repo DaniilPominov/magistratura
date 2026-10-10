@@ -1,7 +1,7 @@
 # TASK-10. MVP gate и интеграционный запуск
 
-Роль: QA / evaluation. Задача выполняется после минимального рабочего
-контура и закрывает вопрос «MVP действительно работает?».
+Роль: QA / evaluation. Задача выполняется после собственного VAD и закрывает
+вопрос «первый этап действительно дал работающий и измеримый VAD?».
 
 ## Цель
 
@@ -11,45 +11,48 @@
 ## Вход
 
 - конфигурация pipeline;
-- синтетический корпус TASK-09;
-- результаты TASK-01, TASK-02, TASK-06, TASK-07 и TASK-08;
+- синтетический корпус TASK-09 для regression;
+- реальный gold-набор TASK-08 для оценки собственного VAD;
+- результаты TASK-01, TASK-02, TASK-06, TASK-08 и TASK-11;
 - фиксированный seed.
 
 ## Обязательный прогон
 
 ```text
-generate → audit → features → VAD → pseudo-labels
-→ Label Studio export/import → metrics → report
+generate → audit → features → energy/WebRTC baselines
+→ own VAD → subject-level metrics → report
 ```
 
 ## Метрики
 
-На synthetic ground truth посчитать:
+На synthetic ground truth посчитать regression-метрики, а на real gold test
+split — метрики собственного VAD:
 
-- `pseudo_speech_precision`;
-- `pseudo_silence_precision`;
-- `pseudo_hesitation_recall`;
-- `false_pause_rate`;
+- `speech_recall`;
+- `false_pause_precision`;
+- `pause_duration_bias`;
+- segment F1 or IoU with explicit tolerance;
+- baseline-vs-own-VAD delta;
 - долю пересекающихся сегментов;
 - долю сегментов вне границ файла;
-- round-trip loss count.
+- latency and processing speed.
 
 Метрики должны иметь версию, конфигурацию, seed и dataset version.
 
 ## Критерии приемки
 
-1. Весь прогон запускается одной локальной командой.
+1. Весь synthetic regression-прогон запускается одной локальной командой.
 2. Поврежденный файл фиксируется в отчете и не прерывает batch.
 3. Результат повторяется при одинаковых seed и конфигурации.
-4. Ни один pseudo-label не экспортируется как gold.
+4. Test split не используется для настройки модели или порогов.
 5. При намеренном нарушении контракта интеграционный тест падает.
 6. Отчет явно разделяет `synthetic_quality` и `real_data_quality`.
 7. При невыполнении порогов команда завершается с ненулевым кодом и
    сообщает, какой порог нарушен.
+8. Real-data quality считается только на отложенных респондентах и только
+   после появления gold-разметки.
 
 ## Не входит в задачу
 
-- обучение нейросети;
-- доказательство качества на реальном корпусе;
-- статистические выводы о когнитивных характеристиках;
-- оптимизация Hurst, entropy, RQA или Lyapunov.
+- выводы о когнитивных характеристиках;
+- обязательное использование Hurst, entropy, RQA или Lyapunov.

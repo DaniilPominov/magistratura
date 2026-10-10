@@ -3,7 +3,9 @@
 Роль: VAD integration agent. Файлы результата: `vad_base.py`, `energy_vad.py`, `webrtc_vad_adapter.py`, `silero_vad_adapter.py`.
 
 ## Цель
-Единый интерфейс для сравнения energy baseline, WebRTC VAD, Silero VAD и будущего гибридного сегментатора. Без него нельзя корректно сравнить false pause rate и hesitation recall.
+Единый интерфейс для сравнения energy baseline, WebRTC VAD, optional Silero
+VAD и будущего собственного VAD. Для первого этапа обязательны energy и
+WebRTC; Silero не должен блокировать разработку собственного VAD.
 
 ## Вход
 Аудиофайл или массив, конфиг backend, ожидаемый sample rate.
@@ -38,9 +40,11 @@ class VadBackend:
 1. Одинаковая schema у всех backend.
 2. Сегменты монотонны и не пересекаются.
 3. Время в секундах исходного файла, не в кадрах.
-4. WebRTC и Silero работают на 8 и 16 kHz.
+4. WebRTC работает на 8 и 16 kHz. Silero, если подключен, проверяется
+   отдельно.
 5. Energy VAD без внешних нативных зависимостей.
-6. Запуск в Colab T4 и локально на CPU.
+6. Energy и WebRTC запускаются локально на CPU. Silero является optional
+   backend.
 7. Сериализация в CSV, Parquet или JSON.
 
 ## Тесты
@@ -60,4 +64,9 @@ class VadBackend:
 - Автоматическое считывание `non_speech` как `silent_pause`.
 
 ## Инструкция агенту
-Реализуй VadBackend и адаптеры energy, WebRTC и Silero. Вход — файл или массив, выход — непересекающиеся speech-сегменты в формате SegmentRecord с версией backend и конфигом. Тесты на синтетике с речеподобными фрагментами и тишиной. Не смешивай бинарный VAD с многоклассовой таксономией.
+Реализуй VadBackend и адаптеры energy и WebRTC как обязательную часть
+первого этапа. Silero реализуй как optional backend, если зависимости
+доступны. Вход — файл или массив, выход — непересекающиеся speech-сегменты
+в формате SegmentRecord с версией backend и конфигом. Тесты на синтетике с
+речеподобными фрагментами и тишиной. Не смешивай бинарный VAD с
+многоклассовой таксономией.
