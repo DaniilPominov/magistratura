@@ -16,6 +16,15 @@ Lyapunov остается отдельной exploratory-ветвью с validit
 Annotation workflow и pseudo-labels являются средствами для разработки и
 проверки VAD, а не самостоятельными финальными целями.
 
+Ключевой методический документ для обязательной ветви `H`/`T`:
+[crm358.pdf](../../docs/kuzenkov/crm358.pdf) и его рабочая выжимка
+[crm358.md](../../docs/kuzenkov/crm358.md). Документ используется как
+основание для modified R/S-анализa энергетической огибающей, выбора
+геометрической шкалы `tau`, усреднения по перекрывающимся интервалам и
+оценки характерного времени. Параметры записи и клинические выводы статьи
+не переносятся в проект автоматически; алгоритм должен быть проверен на
+синтетических рядах и реальных gold-сегментах.
+
 В этом плане MVP — это локально воспроизводимый контур разработки и оценки
 собственного VAD, а не обученная система вывода о когнитивных
 характеристиках.
@@ -158,7 +167,7 @@ validity checks.
 |---|---|---|---|
 | TASK-01-wav-audit.md | Аудит WAV-файлов | Data engineering | P0; TASK-09 минимальная для интеграционного теста |
 | TASK-02-feature-extractor.md | Извлечение кадровых признаков | Speech feature | P0; TASK-01 |
-| TASK-03-hurst-dfa.md | Показатель Хёрста (DFA) | Nonlinear dynamics | P0; может разрабатываться параллельно после TASK-02 |
+| TASK-03-hurst-dfa.md | Показатель Хёрста (DFA и modified R/S) | Nonlinear dynamics | P0; методический источник — crm358; может разрабатываться параллельно после TASK-02 |
 | TASK-04-entropy.md | Sample и permutation entropy | Complexity metrics | P0; может разрабатываться параллельно после TASK-02 |
 | TASK-05-rqa-lyapunov.md | RQA и опциональный Ляпунов | Dynamical systems | P0; TASK-02; TASK-04 частично |
 | TASK-06-vad-adapters.md | Адаптеры VAD: energy, WebRTC, Silero | VAD integration | P0; TASK-01; TASK-02 |
