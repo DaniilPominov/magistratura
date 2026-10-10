@@ -1,0 +1,5 @@
+{
+  "include": ["voice_signals/src", "voice_signals/tests"],
+  "extraPaths": ["voice_signals/src"],
+  "typeCheckingMode": "basic"
+}
