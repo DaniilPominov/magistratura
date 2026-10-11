@@ -57,3 +57,60 @@ subject-level split и сравнение метрик; её не следует
   Lyapunov подключать только с validity flags.
 - Не использовать test-разметку при подборе порогов и не трактовать VAD
   как модель когнитивных характеристик.
+
+---
+
+## Рефакторинг (2026-10-11)
+
+После завершения первоначальной реализации был проведён рефакторинг для устранения технического долга и подготовки кодовой базы к следующим задачам (TASK-09, TASK-02, TASK-01, TASK-06).
+
+### Выполнено
+
+**Контракты данных** (завершение TASK-00):
+- Добавлены `FileAuditRecord`, `FrameFeatureRecord`, `ExperimentRecord` в `schemas.py`
+- Создан `docs/contracts.md` с полным описанием всех контрактов
+- Все контракты экспортируются через `__init__.py`
+
+**Конфигурационный слой**:
+- Добавлена зависимость `pyyaml>=6.0` в `pyproject.toml`
+- Создан модуль `config.py` с `load_config`, `config_hash`, `validate_config`
+- Создан `configs/default.yaml` с полной спецификацией параметров
+- Добавлены тесты конфигурации в `tests/test_config.py`
+
+**Унификация фрейминга**:
+- Создан модуль `framing.py` с классами `TimeGrid`, `FrameScore` и функцией `compute_rms_frames`
+- `EnergyVad` рефакторен для использования `compute_rms_frames` вместо дублирующей логики
+- `modified_rs_hurst` теперь принимает опциональную `precomputed_envelope` для переиспользования огибающей
+- Добавлен параметр `return_frame_scores` в `EnergyVad.process_array` для возврата кадровых scores
+
+**Инфраструктура**:
+- Созданы каталоги `data/{synthetic,real,features,segments}/` с `.gitkeep`
+- Создан каталог `reports/` с `.gitkeep`
+- Созданы заглушки скриптов: `scripts/{run_audit,extract_features,run_vad,generate_synthetic}.py`
+
+**Тестирование**:
+- Добавлены тесты для `TimeGrid`, `compute_rms_frames`, `FrameScore` в `tests/test_framing.py`
+- Все 15 тестов проходят успешно
+- Обратная совместимость сохранена: `EnergyVad.process_array()` без `return_frame_scores` работает идентично предыдущей версии
+
+### Изменения API
+
+- `EnergyVad.process_array` теперь поддерживает `return_frame_scores=True` для получения `(segments, scores)`
+- `modified_rs_hurst` принимает опциональный `precomputed_envelope` для переиспользования RMS-огибающей
+- Все публичные API экспортируются через `__init__.py` (34 экспорта)
+
+### Не изменено (согласно плану)
+
+- Характерное время `T` остаётся argmax-оценкой (piecewise-фит отложен до TASK-11)
+- Бинарная таксономия `speech`/`non_speech` (расширенная таксономия в config, но не используется)
+- Отсутствие WebRTC/Silero адаптеров (TASK-06)
+- Отсутствие синтетического корпуса (TASK-09)
+
+### Следующие шаги
+
+См. `.kilo/plans/1791694842674-iteration01-refactoring.md` для полного плана.
+
+1. **TASK-09**: Синтетический генератор (тон, тишина, гезитации) + manifest
+2. **TASK-01**: Аудит WAV на синтетике, затем на реальных данных
+3. **TASK-02**: Единый feature extractor с переиспользованием `TimeGrid`
+4. **TASK-06**: WebRTC/Silero адаптеры с тем же `SegmentRecord`

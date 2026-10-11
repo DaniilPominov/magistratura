@@ -1,0 +1,44 @@
+version: "0.1.0"
+metadata:
+  project: "voice_signals"
+  created: "2026-10-10"
+  description: "Default configuration for MVP iteration 01"
+
+framing:
+  sample_rate: 16000  # ASSUMPTION: will be fixed after TASK-01 audit
+  frame_ms: 20.0
+  hop_ms: 10.0
+
+vad:
+  energy:
+    speech_threshold_db: 10.0
+    release_threshold_db: 6.0
+    noise_percentile: 0.2
+    min_speech_ms: 80.0
+    min_pause_ms: 80.0
+  
+  # WebRTC и Silero будут добавлены в TASK-06
+  # webrtc: {}
+  # silero: {}
+
+dynamics:
+  modified_rs:
+    envelope_window_sec: 0.025
+    min_tau: 4
+    max_tau: null  # auto: len(envelope) // 2
+    r_squared_threshold: 0.7
+    # TODO_TASK-11: добавить параметры piecewise-фита для T
+
+# Таксономия MVP (решение человека до старта)
+taxonomy:
+  labels: ["speech", "silent_pause", "hesitation", "artifact"]
+  mvp_binary: ["speech", "non_speech"]  # текущая упрощённая версия
+  rules:
+    breathing: "artifact"
+    lexical_fillers: "no_separate_label"  # отражено в annotation guideline
+
+# Валидация и тестирование
+validation:
+  primary_metric: "false_pause_precision"
+  control_metrics: ["hesitation_recall", "speech_recall", "pause_duration_bias"]
+  subject_split_required: true

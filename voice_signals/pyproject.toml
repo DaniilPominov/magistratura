@@ -7,6 +7,7 @@ name = "voice-signals"
 version = "0.1.0"
 description = "Reproducible, local voice activity segmentation primitives"
 requires-python = ">=3.10"
+dependencies = ["pyyaml>=6.0"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

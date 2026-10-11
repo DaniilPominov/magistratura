@@ -44,3 +44,66 @@ def validate_non_overlapping(segments: list[SegmentRecord]) -> None:
     for previous, current in zip(ordered, ordered[1:]):
         if current.start_sec < previous.end_sec:
             raise ValueError("segments overlap")
+
+
+@dataclass(frozen=True)
+class FileAuditRecord:
+    """Результат аудита WAV-файла (TASK-01)."""
+
+    file_id: str
+    file_path: str
+    duration_sec: float
+    sample_rate: int
+    n_channels: int
+    bit_depth: int
+    file_size_bytes: int
+    is_valid: bool
+    warnings: tuple[str, ...] = ()
+    subject_id: str | None = None  # UNKNOWN до получения реальных данных
+    task_type: str = "UNKNOWN"
+
+    def to_dict(self) -> dict[str, Any]:
+        return asdict(self)
+
+
+@dataclass(frozen=True)
+class FrameFeatureRecord:
+    """Кадровые признаки (TASK-02)."""
+
+    file_id: str
+    subject_id: str | None
+    task_type: str
+    sample_rate: int
+    frame_ms: float
+    hop_ms: float
+    n_frames: int
+    feature_names: tuple[str, ...]
+    feature_versions: dict[str, str]  # {"log_mel": "0.1.0", "mfcc": "0.1.0"}
+    checksum_audio: str  # hash входного аудио
+    checksum_config: str  # hash конфигурации признаков
+
+    # Фактические признаки хранятся отдельно (parquet/npy)
+    # Этот контракт — только метаданные
+
+    def to_dict(self) -> dict[str, Any]:
+        return asdict(self)
+
+
+@dataclass(frozen=True)
+class ExperimentRecord:
+    """Результат эксперимента (TASK-10)."""
+
+    experiment_id: str
+    config_hash: str
+    dataset_version: str
+    train_subjects: tuple[str, ...]
+    val_subjects: tuple[str, ...]
+    test_subjects: tuple[str, ...]
+    model_name: str  # "energy", "webrtc", "custom_vad_v1"
+    model_version: str
+    metrics: dict[str, float]  # {"false_pause_precision": 0.85, ...}
+    created_at: str  # ISO8601
+    notes: str = ""
+
+    def to_dict(self) -> dict[str, Any]:
+        return asdict(self)

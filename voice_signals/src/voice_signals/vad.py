@@ -8,6 +8,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Iterable
 
+from .framing import FrameScore, TimeGrid, compute_rms_frames
 from .schemas import SegmentRecord, validate_non_overlapping
 
 
@@ -39,28 +40,33 @@ class EnergyVad:
         file_id: str = "array",
         subject_id: str | None = None,
         task_type: str = "vad",
-    ) -> list[SegmentRecord]:
+        return_frame_scores: bool = False,
+    ) -> list[SegmentRecord] | tuple[list[SegmentRecord], list[FrameScore]]:
         samples = list(audio)
         if sample_rate <= 0 or not samples:
+            if return_frame_scores:
+                return [], []
             return []
-        frame = max(1, round(sample_rate * self.config.frame_ms / 1000))
-        hop = max(1, round(sample_rate * self.config.hop_ms / 1000))
-        energies = [
-            sum(sample * sample for sample in samples[start:start + frame])
-            / len(samples[start:start + frame])
-            for start in range(0, len(samples), hop)
-            if samples[start:start + frame]
-        ]
-        db = [10 * math.log10(energy + 1e-12) for energy in energies]
+        
+        # Use unified framing
+        grid = TimeGrid.from_ms(sample_rate, self.config.frame_ms, self.config.hop_ms)
+        times, energies = compute_rms_frames(samples, grid)
+        
+        # Convert RMS to energy (square) and then to dB
+        db = [10 * math.log10(energy * energy + 1e-12) for energy in energies]
         baseline = _percentile(db, self.config.noise_percentile)
+        
+        # Hysteresis logic
         states: list[bool] = []
         active = False
         for value in db:
             limit = self.config.release_threshold_db if active else self.config.speech_threshold_db
             active = value - baseline >= limit
             states.append(active)
+        
+        # Convert states to segments
         segments = _states_to_segments(
-            states, hop / sample_rate, len(samples) / sample_rate,
+            states, grid.hop_sec, len(samples) / sample_rate,
             self.config.min_speech_ms / 1000, self.config.min_pause_ms / 1000,
         )
         result = [
@@ -69,6 +75,13 @@ class EnergyVad:
             for start, end in segments
         ]
         validate_non_overlapping(result)
+        
+        if return_frame_scores:
+            scores = [
+                FrameScore(time, db_val, state, baseline)
+                for time, db_val, state in zip(times, db, states)
+            ]
+            return result, scores
         return result
 
     def process_file(

@@ -6,6 +6,8 @@ import math
 from dataclasses import dataclass
 from statistics import mean
 
+from .framing import TimeGrid, compute_rms_frames
+
 
 @dataclass(frozen=True)
 class HurstRSResult:
@@ -24,11 +26,20 @@ def modified_rs_hurst(
     envelope_window_sec: float = 0.025,
     min_tau: int = 4,
     max_tau: int | None = None,
+    precomputed_envelope: list[float] | None = None,
 ) -> HurstRSResult:
     """Estimate H and a coarse T from overlapping R/S windows.
 
     This is deliberately a diagnostic feature, not a standalone speech
     decision. Short or constant inputs return an invalid result.
+    
+    Args:
+        values: Audio samples or pre-computed RMS values
+        sample_rate: Sample rate in Hz (or effective rate for envelope)
+        envelope_window_sec: Window size for envelope computation (ignored if precomputed_envelope is provided)
+        min_tau: Minimum tau for R/S analysis
+        max_tau: Maximum tau for R/S analysis (auto: len(envelope) // 2)
+        precomputed_envelope: Optional pre-computed RMS envelope
     """
     warnings: list[str] = []
     if sample_rate <= 0:
@@ -37,11 +48,17 @@ def modified_rs_hurst(
         return HurstRSResult(None, None, (), None, False, ("input_too_short",))
     if not all(math.isfinite(value) for value in values):
         return HurstRSResult(None, None, (), None, False, ("non_finite_input",))
-    window = max(1, round(envelope_window_sec * sample_rate))
-    envelope = [
-        math.sqrt(mean(value * value for value in values[index:index + window]))
-        for index in range(0, len(values) - window + 1, window)
-    ]
+    
+    # Use precomputed envelope or compute it
+    if precomputed_envelope is not None:
+        envelope = precomputed_envelope
+    else:
+        window = max(1, round(envelope_window_sec * sample_rate))
+        envelope = [
+            math.sqrt(mean(value * value for value in values[index:index + window]))
+            for index in range(0, len(values) - window + 1, window)
+        ]
+    
     if len(envelope) < 8 or max(envelope) - min(envelope) <= 1e-12:
         return HurstRSResult(None, None, (), None, False, ("constant_or_short_envelope",))
 
