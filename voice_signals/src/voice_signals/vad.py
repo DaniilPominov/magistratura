@@ -6,10 +6,11 @@ import math
 import wave
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Iterable
+from typing import Iterable, List
 
 from .framing import FrameScore, TimeGrid, compute_rms_frames
 from .schemas import SegmentRecord, validate_non_overlapping
+from .vad_backend import VadBackend
 
 
 @dataclass(frozen=True)
@@ -23,7 +24,7 @@ class EnergyVadConfig:
     min_pause_ms: float = 80.0
 
 
-class EnergyVad:
+class EnergyVad(VadBackend):
     name = "energy"
     version = "0.1.0"
 
@@ -34,7 +35,7 @@ class EnergyVad:
 
     def process_array(
         self,
-        audio: Iterable[float],
+        audio: Iterable[float] | List[float],
         sample_rate: int,
         *,
         file_id: str = "array",

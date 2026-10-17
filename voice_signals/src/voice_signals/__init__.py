@@ -11,6 +11,7 @@ from .schemas import (
     validate_non_overlapping,
 )
 from .vad import EnergyVad, EnergyVadConfig
+from .vad_backend import VadBackend
 
 __all__ = [
     # Core contracts
@@ -20,6 +21,7 @@ __all__ = [
     "ExperimentRecord",
     "validate_non_overlapping",
     # VAD
+    "VadBackend",
     "EnergyVad",
     "EnergyVadConfig",
     # Framing

@@ -19,7 +19,7 @@ def main() -> None:
     parser.add_argument(
         "wav", nargs="?", type=Path,
         default=PROJECT_ROOT / "tests" / "test_data" / (
-            "12_Arrival In_aid_edit_seder_veronika_melnikova.wav"
+            "Ru-Vegetables.wav"
         ),
     )
     args = parser.parse_args()

@@ -1,8 +1,8 @@
-version: "0.1.0"
+version: "0.2.0"
 metadata:
   project: "voice_signals"
   created: "2026-10-10"
-  description: "Default configuration for MVP iteration 01"
+  description: "Configuration for iteration 02 with synthetic corpus, audit, features, and piecewise R/S fit"
 
 framing:
   sample_rate: 16000  # ASSUMPTION: will be fixed after TASK-01 audit

@@ -6,7 +6,7 @@ from voice_signals.config import config_hash, load_config, validate_config
 def test_load_config() -> None:
     """Test loading the default configuration."""
     config = load_config("configs/default.yaml")
-    assert config["version"] == "0.1.0"
+    assert config["version"] == "0.2.0"
     assert "framing" in config
     assert "vad" in config
     assert "taxonomy" in config
