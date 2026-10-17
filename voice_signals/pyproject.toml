@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "voice-signals"
-version = "0.1.0"
-description = "Reproducible, local voice activity segmentation primitives"
+version = "0.2.0"
+description = "Reproducible, local voice activity segmentation primitives with modified R/S analysis"
 requires-python = ">=3.10"
 dependencies = ["pyyaml>=6.0"]
 

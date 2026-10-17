@@ -6,6 +6,9 @@
 **Версия:** 0.2.0  
 **Дата:** 2026-10-17
 
+**🔴 Критический блокер:** Нет доступа к реальному корпусу  
+**📋 Следующие шаги:** См. [NEXT_STEPS.md](NEXT_STEPS.md)
+
 ---
 
 ## Быстрый старт
@@ -96,10 +99,13 @@ if result.valid:
 
 ## Документация
 
-- **[Руководство по использованию](docs/usage-guide.md)** — установка, API, примеры, FAQ
-- **[Отчёт Iteration 01](docs/report-iteration-01.md)** — методическая основа, первая итерация
-- **[Отчёт Iteration 02](docs/report-iteration-02.md)** — что реализовано во второй итерации
-- **[Контракты данных](docs/contracts.md)** — спецификация SegmentRecord, FileAuditRecord, etc.
+- **[📊 Оценка состояния проекта (17.10.2026)](docs/project-status-2026-10-17.md)** ⭐ – полный анализ
+- **[🔴 Вопросы к научному руководителю](docs/questions-for-advisor.md)** – критические блокеры
+- **[📚 Навигация по документации](docs/README.md)** – все документы
+- **[Руководство по использованию](docs/usage-guide.md)** – установка, API, примеры, FAQ
+- **[Отчёт Iteration 01](docs/report-iteration-01.md)** – методическая основа, первая итерация
+- **[Отчёт Iteration 02](docs/report-iteration-02.md)** – что реализовано во второй итерации
+- **[Контракты данных](docs/contracts.md)** – спецификация SegmentRecord, FileAuditRecord, etc.
 
 ---
 
@@ -166,12 +172,19 @@ print(config_hash(config))  # a3f7c8d9e2b1...
 
 ## Следующие шаги (Iteration 03)
 
-- Реальная gold-разметка (Label Studio, IAA)
-- WebRTC VAD адаптер
+**🔴 Критические блокеры:**
+1. Получить реальный корпус (запросить у научного руководителя)
+2. Gold-разметка (Label Studio, IAA ≥ 0.8)
+3. WebRTC VAD адаптер
+4. Subject-level split для честной валидации
+
+**Остальные улучшения:**
 - Метрики качества (precision, recall, F1, IoU, latency, false pause precision)
-- Subject-level split для валидации
 - DFA-Hurst для сравнения с modified R/S
-- Lyapunov (exploratory)
+- Спектральные признаки (MFCC, log-Mel)
+- Lyapunov (exploratory, с validity flags)
+
+**Детальный план:** см. [docs/project-status-2026-10-17.md](docs/project-status-2026-10-17.md)
 
 ---
 
