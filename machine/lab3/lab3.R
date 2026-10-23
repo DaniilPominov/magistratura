@@ -1,111 +1,83 @@
 library(MASS)
 library(pROC)
+library(caret)
 library(ggplot2)
-
-set.seed(123)
-
-df <- read.csv("heart.csv", stringsAsFactors = FALSE)
-
-cat("Размер исходной выборки:", nrow(df), "x", ncol(df), fill = TRUE)
-cat("Пропусков до удаления:", sum(is.na(df)), fill = TRUE)
-df <- na.omit(df)
-cat("Размер после удаления пропусков:", nrow(df), "x", ncol(df), fill = TRUE)
-
-cat_vars <- c("Sex", "ChestPainType", "FastingBS", "RestingECG",
-              "ExerciseAngina", "ST_Slope", "HeartDisease")
-df[cat_vars] <- lapply(df[cat_vars], factor)
-df$HeartDisease <- factor(df$HeartDisease, levels = c(0, 1))
-
-str(df)
-p1 <- ggplot(df, aes(x = ST_Slope, fill = HeartDisease)) +
-  geom_bar(position = "dodge") +
-  labs(title = "Распределение пациентов по наклону сегмента ST",
-       x = "ST_Slope", y = "Количество пациентов", fill = "HeartDisease") +
-  theme_bw()
-ggsave("st_slope_counts.png", p1, width = 7, height = 5, dpi = 150)
-
-p2 <- ggplot(df, aes(x = ST_Slope, fill = HeartDisease)) +
+library(vcd)
+heart <- read.csv("heart.csv")
+# проверка и удаление пропусков
+sum(is.na(heart))
+heart <- na.omit(heart)
+cat_vars <- c("Sex", "ChestPainType", "RestingECG", "ExerciseAngina", "ST_Slope")
+heart[cat_vars] <- lapply(heart[cat_vars], as.factor)
+heart$HeartDisease <- as.factor(heart$HeartDisease)
+summary(heart)
+# визуальный анализ связи HeartDisease и ST_Slope
+mosaic(~ ST_Slope + HeartDisease, data = heart,
+       shade = TRUE,
+       legend = TRUE,
+       main = "Связь наклона сегмента ST и наличия заболевания")
+ggplot(heart, aes(x = ST_Slope, fill = HeartDisease)) +
   geom_bar(position = "fill") +
-  labs(title = "Доля пациентов с заболеванием в зависимости от ST_Slope",
-       x = "ST_Slope", y = "Доля", fill = "HeartDisease") +
-  theme_bw()
-ggsave("st_slope_proportion.png", p2, width = 7, height = 5, dpi = 150)
-
-cat("Таблица сопряжённости ST_Slope и HeartDisease:", fill = TRUE)
-print(table(df$ST_Slope, df$HeartDisease))
-cat("Доли HeartDisease = 1 по группам ST_Slope:", fill = TRUE)
-print(round(prop.table(table(df$ST_Slope, df$HeartDisease), 1), 3))
-numeric_vars <- c("Age", "RestingBP", "Cholesterol", "MaxHR", "Oldpeak")
-
-n_train <- round(0.7 * nrow(df))
-train_idx <- sample(seq_len(nrow(df)), n_train)
-train <- df[train_idx, ]
-test <- df[-train_idx, ]
-
-cat("Обучающая выборка:", nrow(train), "строк; контрольная:", nrow(test), "строк", fill = TRUE)
-
-for (v in numeric_vars) {
-  m <- mean(train[[v]])
-  s <- sd(train[[v]])
-  train[[v]] <- (train[[v]] - m) / s
-  test[[v]] <- (test[[v]] - m) / s
-}
-
-cat("Средние и стандартные отклонения (обучающая выборка):", fill = TRUE)
-print(round(data.frame(
-  mean = sapply(df[numeric_vars], mean),
-  sd = sapply(df[numeric_vars], sd)
-), 3))
+  labs(y = "Доля", title = "Распределение HeartDisease по ST_Slope") +
+  theme_minimal()
+# нормировка
+num_vars <- c("Age", "RestingBP", "Cholesterol", "MaxHR", "Oldpeak")
+heart[num_vars] <- scale(heart[num_vars])
+summary(heart[num_vars])
+# разделение
+train_index <- createDataPartition(heart$HeartDisease, p = 0.7, list = FALSE)
+train <- heart[train_index, ]
+test  <- heart[-train_index, ]
+cat("Размер обучающей выборки:", nrow(train))
+cat("Размер контрольной выборки:", nrow(test))
+# классификаторы
 logit_model <- glm(HeartDisease ~ ., data = train, family = binomial)
-cat("=== Логистическая регрессия ===", fill = TRUE)
-print(summary(logit_model))
+summary(logit_model)
 lda_model <- lda(HeartDisease ~ ., data = train)
-cat("=== Линейный дискриминантный анализ ===", fill = TRUE)
-print(lda_model)
-prob_logit <- predict(logit_model, newdata = test, type = "response")
-pred_logit <- factor(ifelse(prob_logit > 0.5, "1", "0"), levels = c("0", "1"))
-
-lda_pred <- predict(lda_model, newdata = test)
-pred_lda <- lda_pred$class
-prob_lda <- lda_pred$posterior[, "1"]
-
-cat("Матрица ошибок — логистическая регрессия:", fill = TRUE)
-cm_logit <- table(Факт = test$HeartDisease, Прогноз = pred_logit)
-print(cm_logit)
-cat("Матрица ошибок — LDA:", fill = TRUE)
-cm_lda <- table(Факт = test$HeartDisease, Прогноз = pred_lda)
-print(cm_lda)
-metrics <- function(cm) {
-  TP <- cm["1", "1"]; TN <- cm["0", "0"]
-  FP <- cm["0", "1"]; FN <- cm["1", "0"]
-  accuracy <- (TP + TN) / sum(cm)
-  sensitivity <- TP / (TP + FN)
-  specificity <- TN / (TN + FP)
-  precision <- TP / (TP + FP)
-  f1 <- 2 * precision * sensitivity / (precision + sensitivity)
-  c(accuracy = accuracy, sensitivity = sensitivity, specificity = specificity,
-    precision = precision, F1 = f1)
-}
-
-res <- rbind(Logistic = metrics(cm_logit), LDA = metrics(cm_lda))
-cat("Метрики качества классификации:", fill = TRUE)
-print(round(res, 4))
-roc_logit <- roc(test$HeartDisease, prob_logit, levels = c("0", "1"),
-                 direction = "<", quiet = TRUE)
-roc_lda <- roc(test$HeartDisease, prob_lda, levels = c("0", "1"),
-               direction = "<", quiet = TRUE)
-
-cat("AUC (лог. регрессия):", round(auc(roc_logit), 4),
-    "| 95% ДИ:", paste(round(ci.auc(roc_logit)[c(1, 3)], 4), collapse = " - "), fill = TRUE)
-cat("AUC (LDA):", round(auc(roc_lda), 4),
-    "| 95% ДИ:", paste(round(ci.auc(roc_lda)[c(1, 3)], 4), collapse = " - "), fill = TRUE)
-
-png("roc_curves.png", width = 1200, height = 900, res = 150)
-plot(roc_logit, col = "blue", lwd = 2, main = "ROC-кривые классификаторов",
-     print.auc = FALSE)
-plot(roc_lda, col = "red", lwd = 2, add = TRUE, print.auc = FALSE)
-legend("bottomright",
-       legend = c(paste0("Логистическая регрессия, AUC = ", round(auc(roc_logit), 3)),
-                  paste0("LDA, AUC = ", round(auc(roc_lda), 3))),
-       col = c("blue", "red"), lwd = 2)
-dev.off()
+lda_model
+# оценки
+test$pred_logit <- predict(logit_model, newdata = test, type = "response")
+test$class_logit <- factor(ifelse(test$pred_logit > 0.5, "1", "0"),
+                           levels = levels(test$HeartDisease))
+conf_logit <- table(Predicted = test$class_logit, Actual = test$HeartDisease)
+print(conf_logit)
+cm_logit <- confusionMatrix(test$class_logit, test$HeartDisease, positive = "1")
+cm_logit$byClass[c("Sensitivity", "Specificity", "Precision", "F1")]
+cm_logit$overall["Accuracy"]
+# ROC
+m_ROC_logit.roc <- roc(test$HeartDisease, test$pred_logit)
+plot(m_ROC_logit.roc, grid.col = c("green", "red"), grid = c(0.1, 0.2),
+     print.auc = TRUE, print.thres = TRUE,
+     main = "ROC: логистическая регрессия")
+plot(smooth(m_ROC_logit.roc), col = "blue", add = TRUE, print.auc = FALSE)
+# LDA
+pred_lda        <- predict(lda_model, newdata = test)
+test$class_lda  <- pred_lda$class
+test$pred_lda   <- pred_lda$posterior[, "1"]
+conf_lda <- table(Predicted = test$class_lda, Actual = test$HeartDisease)
+print(conf_lda)
+cm_lda <- confusionMatrix(test$class_lda, test$HeartDisease, positive = "1")
+cm_lda$byClass[c("Sensitivity", "Specificity", "Precision", "F1")]
+cm_lda$overall["Accuracy"]
+# ROC-анализ
+m_ROC_lda.roc <- roc(test$HeartDisease, test$pred_lda)
+plot(m_ROC_lda.roc, grid.col = c("green", "red"), grid = c(0.1, 0.2),
+     print.auc = TRUE, print.thres = TRUE,
+     main = "ROC: LDA")
+plot(smooth(m_ROC_lda.roc), col = "blue", add = TRUE, print.auc = FALSE)
+# сравнение
+metrics <- data.frame(
+  Logit = c(cm_logit$overall["Accuracy"],
+            cm_logit$byClass["Sensitivity"],
+            cm_logit$byClass["Specificity"],
+            cm_logit$byClass["Precision"],
+            cm_logit$byClass["F1"],
+            AUC = as.numeric(auc(m_ROC_logit.roc))),
+  LDA = c(cm_lda$overall["Accuracy"],
+          cm_lda$byClass["Sensitivity"],
+          cm_lda$byClass["Specificity"],
+          cm_lda$byClass["Precision"],
+          cm_lda$byClass["F1"],
+          AUC = as.numeric(auc(m_ROC_lda.roc)))
+)
+print(metrics)
