@@ -1,0 +1,32 @@
+\xpg@aux {}{russian}
+\contentsline {section}{\numberline {1}Введение и постановка задачи}{2}{section.1}%
+\contentsline {subsection}{\numberline {1.1}Научная идея}{2}{subsection.1.1}%
+\contentsline {subsection}{\numberline {1.2}Принципиальное разграничение (методологическая позиция)}{2}{subsection.1.2}%
+\contentsline {subsection}{\numberline {1.3}Текущий статус}{3}{subsection.1.3}%
+\contentsline {section}{\numberline {2}Методическая основа: модифицированный R/S-анализ}{3}{section.2}%
+\contentsline {subsection}{\numberline {2.1}Классический R/S-анализ}{3}{subsection.2.1}%
+\contentsline {subsection}{\numberline {2.2}Модификация Кузенкова--Логинова}{3}{subsection.2.2}%
+\contentsline {section}{\numberline {3}Архитектура и реализация}{4}{section.3}%
+\contentsline {subsection}{\numberline {3.1}Структура пакета}{4}{subsection.3.1}%
+\contentsline {subsection}{\numberline {3.2}Единый слой фрейминга}{5}{subsection.3.2}%
+\contentsline {subsection}{\numberline {3.3}VAD-модуль (Energy VAD)}{5}{subsection.3.3}%
+\contentsline {subsection}{\numberline {3.4}Модуль нелинейной динамики (modified R/S)}{5}{subsection.3.4}%
+\contentsline {subsection}{\numberline {3.5}Контракты данных}{6}{subsection.3.5}%
+\contentsline {subsection}{\numberline {3.6}Вспомогательный инструментарий}{6}{subsection.3.6}%
+\contentsline {subsection}{\numberline {3.7}Воспроизводимость}{7}{subsection.3.7}%
+\contentsline {section}{\numberline {4}Тестирование}{7}{section.4}%
+\contentsline {section}{\numberline {5}Вычислительный эксперимент на тестовой записи}{7}{section.5}%
+\contentsline {subsection}{\numberline {5.1}Базовый прогон VAD}{7}{subsection.5.1}%
+\contentsline {subsection}{\numberline {5.2}Обнаруженная методическая проблема: смещение оценок длиной сегмента}{7}{subsection.5.2}%
+\contentsline {section}{\numberline {6}Обзор дополнительной литературы}{8}{section.6}%
+\contentsline {section}{\numberline {7}Критические ограничения и блокеры}{9}{section.7}%
+\contentsline {subsection}{\numberline {7.1}Блокер 1: отсутствие реального речевого корпуса}{9}{subsection.7.1}%
+\contentsline {subsection}{\numberline {7.2}Блокер 2: отсутствие золотой (gold) разметки}{9}{subsection.7.2}%
+\contentsline {subsection}{\numberline {7.3}Блокер 3: отсутствие baseline WebRTC VAD}{9}{subsection.7.3}%
+\contentsline {subsection}{\numberline {7.4}Блокер 4: отсутствие разбиения по респондентам (subject-level split)}{9}{subsection.7.4}%
+\contentsline {subsection}{\numberline {7.5}Методическое ограничение, выявленное экспериментально}{9}{subsection.7.5}%
+\contentsline {section}{\numberline {8}Вопросы к научному руководителю}{10}{section.8}%
+\contentsline {subsection}{\numberline {8.1}Критически важные}{10}{subsection.8.1}%
+\contentsline {subsection}{\numberline {8.2}Методические}{10}{subsection.8.2}%
+\contentsline {subsection}{\numberline {8.3}Технические}{11}{subsection.8.3}%
+\contentsline {section}{\numberline {9}Заключение}{11}{section.9}%
