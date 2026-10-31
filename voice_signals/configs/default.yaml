@@ -23,10 +23,26 @@ vad:
 
 dynamics:
   modified_rs:
-    envelope_window_sec: 0.025
-    min_tau: 4
-    max_tau: null  # auto: len(envelope) // 2
-    r_squared_threshold: 0.7
+    # Протокол выбран 2026-10-31 (docs/rs-methodology-gap-2026-10-31.md): A + C.
+    # Две несовместимые по масштабу величины, разные поля результата:
+    #   - full_record (вариант A): сопоставим со статьёй Кузенкова/Логинова.
+    #   - segment      (вариант C): диагностический признак на speech-сегменте,
+    #                   НЕ сопоставим между сегментами разной длины и НЕ
+    #                   сопоставим со статьёй. scope/comparable_to_reference
+    #                   в HurstRSResult помечают это явно.
+    segment:
+      envelope_window_sec: 0.025
+      min_tau: 4
+      max_tau: null  # auto: len(envelope) // 2 (явный 0 больше не трактуется как auto)
+      tau_scale: "arithmetic"  # "arithmetic" (легаси) или "geometric"
+      r_squared_threshold: 0.7
+    full_record:
+      envelope_window_sec: 0.1  # 100 мс, как в статье
+      min_tau: 3  # tau_1 = 3, как в статье
+      max_tau: null  # auto: N (вся огибающая, не N/2)
+      tau_scale: "geometric"  # всегда геометрическая шкала, как в статье
+      n_geometric_scales: 16
+      r_squared_threshold: 0.7
     # TODO_TASK-11: добавить параметры piecewise-фита для T
 
 # Таксономия MVP (решение человека до старта)

@@ -1,7 +1,7 @@
 """Local voice activity segmentation primitives."""
 
 from .config import config_hash, load_config, validate_config
-from .dynamics import HurstRSResult, modified_rs_hurst
+from .dynamics import HurstRSResult, modified_rs_hurst, modified_rs_hurst_full_record
 from .framing import FrameScore, TimeGrid, compute_rms_frames
 from .schemas import (
     ExperimentRecord,
@@ -31,6 +31,7 @@ __all__ = [
     # Dynamics
     "HurstRSResult",
     "modified_rs_hurst",
+    "modified_rs_hurst_full_record",
     # Config
     "load_config",
     "config_hash",

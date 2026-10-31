@@ -160,11 +160,21 @@ for seg in segments:
 
 ### Анализ нелинейной динамики
 
+Два протокола, несопоставимые друг с другом (решение 31.10.2026, см.
+[rs-methodology-gap-2026-10-31.md](rs-methodology-gap-2026-10-31.md)):
+
+- **Вариант A** — `modified_rs_hurst_full_record()` на **всём файле**
+  (речь + паузы). Сопоставим с таблицей 1 статьи Кузенкова/Логинова (2014).
+- **Вариант C** — `modified_rs_hurst()` на **одном speech-сегменте**.
+  Диагностический признак, НЕ сопоставим между сегментами разной длины и
+  НЕ сопоставим со статьёй — результат явно помечен
+  `scope="segment"`, `comparable_to_reference=False`.
+
 ```python
-from voice_signals import modified_rs_hurst
+from voice_signals import modified_rs_hurst_full_record, modified_rs_hurst
 import wave
 
-# Загрузить аудио
+# Загрузить аудио (весь файл, без VAD-обрезки пауз)
 with wave.open("path/to/audio.wav", 'rb') as wf:
     sample_rate = wf.getframerate()
     raw = wf.readframes(wf.getnframes())
@@ -174,22 +184,31 @@ audio = [
     for i in range(0, len(raw), 2)
 ]
 
-# Расчёт показателя Хёрста и характерного времени
-result = modified_rs_hurst(audio, sample_rate, use_piecewise_fit=True)
+# Вариант A: один ряд на всю запись, сопоставим со статьёй
+result = modified_rs_hurst_full_record(audio, sample_rate, use_piecewise_fit=True)
 
 if result.valid:
     print(f"Hurst H: {result.hurst_h:.3f}")
     print(f"Characteristic time T: {result.characteristic_time_sec:.3f}s")
     print(f"Fit method: {result.fit_method}")  # "argmax" or "piecewise"
     print(f"R²: {result.fit_r_squared:.3f}")
+    print(f"Scope: {result.scope}, comparable: {result.comparable_to_reference}")
 else:
     print(f"Invalid result: {result.warnings}")
+
+# Вариант C: per-segment диагностика (segment_audio — вырезка по VAD)
+# result_seg = modified_rs_hurst(segment_audio, sample_rate)
+# result_seg.scope == "segment"; result_seg.comparable_to_reference is False
 ```
 
 **Интерпретация H:**
 - `H ≈ 0.5` — броуновское движение (случайное блуждание)
 - `0.5 < H < 1.0` — персистентный ряд (долговременные корреляции)
 - `0 < H < 0.5` — антиперсистентный ряд (возврат к среднему)
+
+**Важно:** значения `H`/`T` из варианта A и варианта C — это разные величины
+с разными полями результата; их нельзя смешивать в одной таблице или
+статистике без явной пометки протокола.
 
 ---
 
@@ -258,10 +277,21 @@ vad:
 
 dynamics:
   modified_rs:
-    envelope_window_sec: 0.025   # Окно огибающей для R/S (с)
-    min_tau: 4                   # Минимальный tau
-    max_tau: null                # Максимальный tau (auto: len(envelope) // 2)
-    r_squared_threshold: 0.7     # Минимальный R² для валидности
+    # Протокол A+C (решение 31.10.2026, docs/rs-methodology-gap-2026-10-31.md):
+    # два несопоставимых друг с другом набора параметров.
+    segment:                      # Вариант C — диагностика на speech-сегменте
+      envelope_window_sec: 0.025  # Окно огибающей для R/S (с)
+      min_tau: 4                  # Минимальный tau
+      max_tau: null               # Максимальный tau (auto: len(envelope) // 2)
+      tau_scale: "arithmetic"     # "arithmetic" (легаси) или "geometric"
+      r_squared_threshold: 0.7    # Минимальный R² для валидности
+    full_record:                  # Вариант A — сопоставим со статьёй Кузенкова
+      envelope_window_sec: 0.1    # 100 мс, как в статье
+      min_tau: 3                  # tau_1 = 3, как в статье
+      max_tau: null               # auto: N (вся огибающая, не N/2)
+      tau_scale: "geometric"      # всегда геометрическая шкала
+      n_geometric_scales: 16
+      r_squared_threshold: 0.7
 
 taxonomy:
   labels: ["speech", "silent_pause", "hesitation", "artifact"]
