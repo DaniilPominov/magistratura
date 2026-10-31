@@ -141,6 +141,7 @@ voice_signals/
     config.py               # YAML конфигурация и hash
   
   scripts/                  # Исполняемые скрипты
+    preprocess_audio.py     # Конвертация любого формата (ffmpeg) в mono 16-bit WAV
   tests/                    # Unit-тесты (pytest, 15 passed)
   configs/default.yaml      # Параметры (framing, VAD, dynamics)
   docs/                     # Документация

@@ -25,6 +25,37 @@ cd voice_signals
 
 ## Основные сценарии использования
 
+### 0. Предобработка аудио произвольного формата
+
+Весь остальной пайплайн (VAD, modified R/S, аудит) принимает только mono
+16-bit PCM WAV. Реальные образцы речи часто приходят в другом виде — WAV
+произвольной частоты дискретизации/битности/числа каналов, MP3 произвольного
+битрейта и т.п. `scripts/preprocess_audio.py` конвертирует любой вход,
+который понимает `ffmpeg`, в целевой формат.
+
+**Требование:** `ffmpeg` и `ffprobe` должны быть на `PATH`
+(https://ffmpeg.org/download.html).
+
+```powershell
+# Один файл
+.\.venv\Scripts\python.exe scripts\preprocess_audio.py sample.mp3 -o data\real_samples
+
+# Папка с разными форматами, рекурсивно
+.\.venv\Scripts\python.exe scripts\preprocess_audio.py raw\ -o data\real_samples --recursive
+
+# Другая целевая частота (по умолчанию 16000 Гц)
+.\.venv\Scripts\python.exe scripts\preprocess_audio.py sample.mp3 -o out --rate 8000
+
+# Проверка без записи файлов
+.\.venv\Scripts\python.exe scripts\preprocess_audio.py raw\ -o out --dry-run
+```
+
+Для каждого входного файла создаётся `<имя>.wav` — mono, 16-bit PCM, заданная
+частота дискретизации. По умолчанию существующие выходные файлы не
+перезаписываются (используйте `--overwrite`).
+
+---
+
 ### 1. Запуск VAD на одном файле
 
 Детекция речевых сегментов в WAV-файле:
@@ -228,10 +259,12 @@ voice_signals/
   configs/default.yaml      # Параметры (framing, VAD, dynamics, taxonomy)
   
   scripts/                  # Исполняемые скрипты
+    preprocess_audio.py     # Конвертация любого формата в mono 16-bit WAV
     run_vad.py              # VAD на одном файле
     generate_synthetic.py   # Генерация синтетического корпуса
     run_audit.py            # Аудит WAV-файлов
     extract_features.py     # Извлечение кадровых признаков
+    run_modified_rs.py      # Modified R/S (A+C), --csv для табличного вывода
     demo_pipeline.py        # Комплексная демонстрация
   
   tests/                    # Unit-тесты (pytest)

@@ -78,6 +78,30 @@ OK Modified R/S: H and T computed with piecewise method
 
 ## Полный workflow
 
+### Шаг 0: Предобработка реальных аудиофайлов (любой формат → mono 16-bit WAV)
+
+Вся остальная цепочка (VAD, modified R/S, аудит) принимает только mono
+16-bit PCM WAV. Реальные образцы приходят в разных форматах (WAV любой
+дискретности/битности/каналов, MP3 любого битрейта и т.п.). Используйте
+`scripts/preprocess_audio.py` (требует `ffmpeg`/`ffprobe` на PATH):
+
+```powershell
+# Один файл
+.\.venv\Scripts\python.exe scripts\preprocess_audio.py sample.mp3 -o data\real_samples
+
+# Папка с файлами разных форматов, рекурсивно
+.\.venv\Scripts\python.exe scripts\preprocess_audio.py raw_samples\ -o data\real_samples --recursive
+
+# Посмотреть, что будет сделано, без записи файлов
+.\.venv\Scripts\python.exe scripts\preprocess_audio.py raw_samples\ -o data\real_samples --dry-run
+```
+
+**Результат:** для каждого входного файла — `<имя>.wav`, mono, 16-bit PCM,
+16000 Гц (частота настраивается флагом `--rate`), готовый для
+`run_vad.py`, `run_audit.py`, `run_modified_rs.py` и т.д.
+
+---
+
 ### Шаг 1: Генерация синтетических данных
 ```powershell
 .\.venv\Scripts\python.exe scripts\generate_synthetic.py --n-files 10 --seed 42
@@ -274,7 +298,8 @@ voice_signals/
 ## FAQ
 
 **Q: Какой формат аудио поддерживается?**  
-A: Только mono 16-bit PCM WAV.
+A: Только mono 16-bit PCM WAV. Для другого формата (WAV другой дискретности,
+MP3 и т.п.) сначала прогнать через `scripts/preprocess_audio.py` (см. Шаг 0).
 
 **Q: Как проверить, что всё работает?**  
 A: Запустить `pytest -q` (должно быть 15 passed).
