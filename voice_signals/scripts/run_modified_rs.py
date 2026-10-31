@@ -16,6 +16,7 @@ Step 4 of HOW-TO-RUN.md.
 """
 
 import argparse
+import csv
 import wave
 from pathlib import Path
 import sys
@@ -30,6 +31,25 @@ from voice_signals import (
     load_config,
 )
 from voice_signals.dynamics import HurstRSResult
+
+CSV_FIELDS = [
+    "scope",
+    "segment_index",
+    "segment_start_sec",
+    "segment_end_sec",
+    "valid",
+    "comparable_to_reference",
+    "hurst_h",
+    "characteristic_time_sec",
+    "fit_r_squared",
+    "fit_method",
+    "tau_scale",
+    "tau_min",
+    "tau_max",
+    "input_length_sec",
+    "interpretation",
+    "warnings",
+]
 
 
 def load_audio(path: Path) -> tuple[list[float], int]:
@@ -71,8 +91,40 @@ def print_result(result: HurstRSResult) -> None:
     print(f"  > {interpret(result.hurst_h)}")
 
 
-def analyze_segment(segment_audio: list[float], sample_rate: int, *, cfg: dict) -> None:
-    result = modified_rs_hurst(
+def result_to_row(
+    result: HurstRSResult,
+    *,
+    segment_index: int | None = None,
+    segment_start_sec: float | None = None,
+    segment_end_sec: float | None = None,
+) -> dict:
+    row = {field: "" for field in CSV_FIELDS}
+    row["scope"] = result.scope
+    row["segment_index"] = "" if segment_index is None else segment_index
+    row["segment_start_sec"] = "" if segment_start_sec is None else f"{segment_start_sec:.3f}"
+    row["segment_end_sec"] = "" if segment_end_sec is None else f"{segment_end_sec:.3f}"
+    row["valid"] = result.valid
+    row["comparable_to_reference"] = result.comparable_to_reference
+    row["tau_scale"] = result.tau_scale
+    row["input_length_sec"] = (
+        "" if result.input_length_sec is None else f"{result.input_length_sec:.3f}"
+    )
+    row["warnings"] = ";".join(result.warnings)
+    if result.valid:
+        row["hurst_h"] = f"{result.hurst_h:.6f}"
+        row["characteristic_time_sec"] = f"{result.characteristic_time_sec:.6f}"
+        row["fit_r_squared"] = (
+            "" if result.fit_r_squared is None else f"{result.fit_r_squared:.6f}"
+        )
+        row["fit_method"] = result.fit_method
+        row["tau_min"] = min(result.tau_values)
+        row["tau_max"] = max(result.tau_values)
+        row["interpretation"] = interpret(result.hurst_h)
+    return row
+
+
+def analyze_segment(segment_audio: list[float], sample_rate: int, *, cfg: dict) -> HurstRSResult:
+    return modified_rs_hurst(
         segment_audio,
         sample_rate,
         envelope_window_sec=cfg["envelope_window_sec"],
@@ -82,11 +134,10 @@ def analyze_segment(segment_audio: list[float], sample_rate: int, *, cfg: dict) 
         r_squared_threshold=cfg.get("r_squared_threshold", 0.7),
         use_piecewise_fit=cfg.get("use_piecewise_fit", True),
     )
-    print_result(result)
 
 
-def analyze_full_record(audio: list[float], sample_rate: int, *, cfg: dict) -> None:
-    result = modified_rs_hurst_full_record(
+def analyze_full_record(audio: list[float], sample_rate: int, *, cfg: dict) -> HurstRSResult:
+    return modified_rs_hurst_full_record(
         audio,
         sample_rate,
         envelope_window_sec=cfg["envelope_window_sec"],
@@ -96,7 +147,13 @@ def analyze_full_record(audio: list[float], sample_rate: int, *, cfg: dict) -> N
         r_squared_threshold=cfg.get("r_squared_threshold", 0.7),
         use_piecewise_fit=cfg.get("use_piecewise_fit", True),
     )
-    print_result(result)
+
+
+def write_csv(rows: list[dict], path: Path) -> None:
+    with open(path, "w", newline="", encoding="utf-8") as f:
+        writer = csv.DictWriter(f, fieldnames=CSV_FIELDS)
+        writer.writeheader()
+        writer.writerows(rows)
 
 
 def main() -> None:
@@ -126,6 +183,15 @@ def main() -> None:
         "--config", type=Path,
         default=PROJECT_ROOT / "configs" / "default.yaml",
     )
+    parser.add_argument(
+        "--csv", type=Path, default=None,
+        help="write all results (one row per run) to this CSV file for easy "
+             "tabular viewing, instead of/in addition to the console output",
+    )
+    parser.add_argument(
+        "--quiet", action="store_true",
+        help="suppress the per-result console output (useful with --csv)",
+    )
     args = parser.parse_args()
 
     if not args.wav.is_file():
@@ -139,33 +205,53 @@ def main() -> None:
     audio, sample_rate = load_audio(args.wav)
     segments = EnergyVad().process_file(args.wav)
 
-    print(f"File: {args.wav}")
-    print(f"Speech segments: {len(segments)}")
+    if not args.quiet:
+        print(f"File: {args.wav}")
+        print(f"Speech segments: {len(segments)}")
+
+    rows: list[dict] = []
 
     if args.scope in ("full_record", "both"):
-        print("\nFull-record analysis (variant A, pauses included):")
-        analyze_full_record(audio, sample_rate, cfg=full_record_cfg)
+        if not args.quiet:
+            print("\nFull-record analysis (variant A, pauses included):")
+        result_full = analyze_full_record(audio, sample_rate, cfg=full_record_cfg)
+        if not args.quiet:
+            print_result(result_full)
+        rows.append(result_to_row(result_full))
 
     if args.scope in ("segment", "both"):
         if not segments:
-            print("\nNo speech segments detected; skipping segment analysis.")
-            return
-
-        if args.all:
-            indices = range(len(segments))
+            if not args.quiet:
+                print("\nNo speech segments detected; skipping segment analysis.")
         else:
-            if not 0 <= args.segment < len(segments):
-                parser.error(
-                    f"segment {args.segment} out of range (0..{len(segments) - 1})")
-            indices = [args.segment]
+            if args.all:
+                indices = range(len(segments))
+            else:
+                if not 0 <= args.segment < len(segments):
+                    parser.error(
+                        f"segment {args.segment} out of range (0..{len(segments) - 1})")
+                indices = [args.segment]
 
-        for i in indices:
-            seg = segments[i]
-            start = int(seg.start_sec * sample_rate)
-            end = int(seg.end_sec * sample_rate)
-            print(f"\nSegment {i} ({seg.start_sec:.3f}s - {seg.end_sec:.3f}s, "
-                  f"variant C, not comparable across segments):")
-            analyze_segment(audio[start:end], sample_rate, cfg=segment_cfg)
+            for i in indices:
+                seg = segments[i]
+                start = int(seg.start_sec * sample_rate)
+                end = int(seg.end_sec * sample_rate)
+                if not args.quiet:
+                    print(f"\nSegment {i} ({seg.start_sec:.3f}s - {seg.end_sec:.3f}s, "
+                          f"variant C, not comparable across segments):")
+                result_seg = analyze_segment(audio[start:end], sample_rate, cfg=segment_cfg)
+                if not args.quiet:
+                    print_result(result_seg)
+                rows.append(result_to_row(
+                    result_seg,
+                    segment_index=i,
+                    segment_start_sec=seg.start_sec,
+                    segment_end_sec=seg.end_sec,
+                ))
+
+    if args.csv is not None:
+        write_csv(rows, args.csv)
+        print(f"\nWrote {len(rows)} row(s) to {args.csv}")
 
 
 if __name__ == "__main__":
