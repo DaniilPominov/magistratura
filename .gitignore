@@ -84,3 +84,11 @@ Desktop.ini
 *.webm
 .kilo/
 kilo.json
+
+# R language
+.RData
+.Rhistory
+.Rapp.history
+.packrat/
+.renv/
+*.Rhistory

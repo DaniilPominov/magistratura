@@ -1,0 +1,62 @@
+Bibliographic Reference
+Title: The Case for Learned Index Structures
+Authors: Tim Kraska, Alex Beutel, Ed H. Chi, Jeffrey Dean, Neoklis Polyzotis
+Year: 2018
+Source: Proceedings of the 2018 International Conference on Management of Data (SIGMOD '18)
+Link: arXiv:1712.01208
+
+Summary of the Text
+The paper "The Case for Learned Index Structures" challenges the decades-old dominance of traditional index structures, such as B-Trees, in database management systems. The authors propose a novel paradigm: replacing traditional algorithmic indexes with machine learning models, referred to as "learned indexes." The core idea is that an index is fundamentally a function that maps a search key to its position in a dataset. Traditional indexes treat this function as a black box, using generic, rigid algorithms to maintain balance and ensure logarithmic search time. However, if the data distribution is known or can be learned, machine learning models can approximate this mapping function much more efficiently. The learned model predicts the approximate position of a key, and a small local search is used to find the exact location. The authors demonstrate through extensive experimental results across various real-world datasets that learned indexes can be significantly smaller in memory footprint and faster in lookup time compared to traditional B-Trees and hash tables. Furthermore, the paper discusses the broader implications of this approach for database architecture. It highlights challenges related to data updates, concurrency control, and the integration of ML models into existing DBMS query optimizers. The work opens a new research direction at the intersection of machine learning and database systems, suggesting that future databases could be highly adaptive, learning the characteristics of the data and the workload to automatically optimize their internal structures.
+
+Glossary of Scientific and Technical Terms
+1. Algorithm - Алгоритм
+2. Approximation - Аппроксимация
+3. Architecture - Архитектура
+4. Array - Массив
+5. B-Tree - B-дерево
+6. Benchmark - Тестовый стенд
+7. Binary search - Двоичный поиск
+8. Bottleneck - Узкое место
+9. Cache - Кэш
+10. Computational complexity - Вычислительная сложность
+11. Concurrency - Параллелизм
+12. Cost model - Модель стоимости
+13. Cumulative distribution function - Функция распределения
+14. Data distribution - Распределение данных
+15. Data structure - Структура данных
+16. Database management system - Система управления базами данных
+17. Deep learning - Глубокое обучение
+18. Disk I/O - Дисковый ввод-вывод
+19. Error bound - Граница ошибки
+20. Evaluation - Оценка
+21. Execution time - Время выполнения
+22. Feature - Признак
+23. Hash table - Хэш-таблица
+24. Hardware - Аппаратное обеспечение
+25. Index structure - Индексная структура
+26. Inference - Вывод
+27. Latency - Задержка
+28. Learned index - Обучаемый индекс
+29. Lookup - Поиск
+30. Machine learning - Машинное обучение
+31. Memory footprint - Потребление памяти
+32. Model - Модель
+33. Neural network - Нейронная сеть
+34. Node - Узел
+35. Optimization - Оптимизация
+36. Outlier - Выброс
+37. Overhead - Накладные расходы
+38. Parameter - Параметр
+39. Performance - Производительность
+40. Prediction - Предсказание
+41. Query - Запрос
+42. Query optimization - Оптимизация запросов
+43. Relational database - Реляционная база данных
+44. Robustness - Устойчивость
+45. Scalability - Масштабируемость
+46. Throughput - Пропускная способность
+47. Training data - Обучающие данные
+48. Traversal - Обход
+49. Update - Обновление
+50. Variance - Дисперсия
+51. Workload - Рабочая нагрузка

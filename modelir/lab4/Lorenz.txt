@@ -1,0 +1,10 @@
+restart;
+with(plots):
+with(DEtools):
+with(plottools,line):
+b:=8/3: r:=28: sigma_:=10:
+ur1:=diff(x(t),t)=-sigma_*(x(t)-y(t)):
+ur2:=diff(y(t),t)=r*x(t)-y(t)-x(t)*z(t):
+ur3:=diff(z(t),t)=x(t)*y(t)-b*z(t):
+Resh:=dsolve( [ur1,ur2,ur3,x(0)=0.5,y(0)=1,z(0)=1.5], [x(t),y(t),z(t)], type=numeric, method=dverk78):
+odeplot(Resh,[x(t),y(t),z(t)],0..35,numpoints=10000,color=black);
