@@ -1,0 +1,16 @@
+__pycache__/
+*.pyc
+.pytest_cache/
+.venv/
+data/raw/
+data/processed/
+reports/*.csv
+
+# Промежуточные файлы сборки отчёта (LaTeX)
+docs/*.aux
+docs/*.fls
+docs/*.fdb_latexmk
+docs/*.log
+docs/*.out
+docs/*.toc
+docs/*.xdv

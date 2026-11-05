@@ -1,5 +1,5 @@
 {
-  "include": ["voice_signals/src", "voice_signals/tests"],
-  "extraPaths": ["voice_signals/src"],
+  "include": ["voice_signals/src", "voice_signals/tests", "magister_work/src", "magister_work/tests"],
+  "extraPaths": ["voice_signals/src", "magister_work/src"],
   "typeCheckingMode": "basic"
 }

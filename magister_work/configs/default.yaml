@@ -1,0 +1,63 @@
+version: "0.1.0"
+metadata:
+  project: "magister_work"
+  stage: "1-vad"
+  created: "2026-11-05"
+  description: "Параметры Этапа 1: VAD (energy + энтропия фазового пространства) и признаки R/S."
+
+framing:
+  sample_rate: 16000  # ASSUMPTION: фиксируется после аудита реального корпуса
+
+vad:
+  energy:
+    frame_ms: 20.0
+    hop_ms: 10.0
+    speech_threshold_db: 10.0
+    release_threshold_db: 6.0
+    noise_percentile: 0.2
+    min_speech_ms: 80.0
+    min_pause_ms: 80.0
+
+  entropy:
+    # Стартовые пороги из Кузенкова/Логинова (Нейроинформатика-2021),
+    # SNR >= 35 дБ. Подлежат калибровке на целевом корпусе.
+    window_ms: 100.0
+    hop_ms: 25.0
+    n_bins: 10
+    k_min: 2
+    k_max: 16
+    envelope_window_ms: 10.0
+    frame_ms: 25.0
+    min_speech_ms: 80.0
+    min_pause_ms: 80.0
+    ln_e_threshold: -5.0
+    entropy_center_s: 3.43
+    entropy_center_sigma: 0.0653
+    entropy_radius_sq: 0.0288
+
+dynamics:
+  modified_rs:
+    segment:      # вариант C: диагностический, несопоставим
+      envelope_window_sec: 0.025
+      min_tau: 4
+      max_tau: null
+      tau_scale: "arithmetic"
+      r_squared_threshold: 0.7
+    full_record:  # вариант A: сопоставим со статьёй
+      envelope_window_sec: 0.1
+      min_tau: 3
+      max_tau: null
+      tau_scale: "geometric"
+      n_geometric_scales: 16
+      r_squared_threshold: 0.7
+
+taxonomy:
+  labels: ["speech", "silent_pause", "hesitation", "artifact"]
+  stage1: ["speech", "non_speech"]
+  rules:
+    breathing: "artifact"
+    lexical_fillers: "speech"
+
+validation:
+  primary_metric: "false_pause_precision"
+  control_metrics: ["speech_recall", "pause_duration_bias", "segment_f1"]
