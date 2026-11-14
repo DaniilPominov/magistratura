@@ -30,7 +30,11 @@
 
 ## Быстрый старт
 
+Требуется Python 3.13 (для него есть готовый wheel PyYAML).
+
 ```powershell
+py -3.13 -m venv .venv
+.\.venv\Scripts\Activate.ps1
 python -m pip install -r requirements.txt
 python -m pytest                       # 22 теста
 python scripts/run_vad.py <файл.wav>   # energy + entropy VAD
